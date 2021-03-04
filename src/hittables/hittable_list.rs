@@ -1,19 +1,21 @@
-use crate::hittables::hittable::{Hittable, HitRecord};
 use std::sync::Arc;
 use crate::ray::Ray;
+use crate::vec3::Vec3;
+use crate::hittables::hittable::{Hittable, HitRecord, HittableTrait};
 
 #[derive(Clone)]
 pub struct HittableList {
-    pub(crate) list: Vec<Arc<dyn Hittable>>
+    pub(crate) list: Vec<Arc<Hittable>>
 }
 
 impl HittableList {
-    pub fn add(&mut self, new_element: Arc<dyn Hittable>) {
+    #[allow(dead_code)]
+    pub fn add(&mut self, new_element: Arc<Hittable>) {
         self.list.push(new_element)
     }
 }
 
-impl Hittable for HittableList {
+impl HittableTrait for HittableList {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut return_value: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
@@ -30,4 +32,17 @@ impl Hittable for HittableList {
         }
         return return_value;
     }
+
+    fn get_min_pos(&self) -> Vec3 {
+        unimplemented!()
+    }
+
+    fn get_max_pos(&self) -> Vec3 {
+        unimplemented!()
+    }
+
+    fn get_mean_pos(&self) -> Vec3 {
+        unimplemented!()
+    }
+
 }

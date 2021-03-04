@@ -1,16 +1,17 @@
-use crate::vec3::{Point3, dot};
+use crate::vec3::{Point3, dot, Vec3};
 use crate::ray::Ray;
 use std::sync::Arc;
-use crate::material::Material;
-use crate::hittables::hittable::{Hittable, HitRecord};
+use crate::material::{Material};
+use crate::hittables::hittable::{HitRecord, HittableTrait};
 
+#[derive(Clone)]
 pub struct Sphere {
     pub(crate) position: Point3,
     pub(crate) radius: f64,
-    pub(crate) material: Arc<dyn Material>,
+    pub(crate) material: Arc<Material>,
 }
 
-impl Hittable for Sphere {
+impl HittableTrait for Sphere{
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin - self.position;
         let a = ray.direction.length_squared();
@@ -36,5 +37,17 @@ impl Hittable for Sphere {
         rec.set_face_normal(ray, &normal);
 
         return Option::from(rec);
+    }
+
+    fn get_min_pos(&self) -> Vec3 {
+        return self.position + -self.radius;
+    }
+
+    fn get_max_pos(&self) -> Vec3 {
+        return self.position + self.radius;
+    }
+
+    fn get_mean_pos(&self) -> Vec3 {
+        return self.position;
     }
 }

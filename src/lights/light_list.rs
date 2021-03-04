@@ -16,10 +16,10 @@ impl LightList{
     pub fn add(&mut self, light: Arc<Light>){
         self.lights.push(light);
     }
-    pub fn get_color(&self, rec: &HitRecord, world: &Box<dyn Hittable + Send + Sync>, col: &mut Color){
+    pub fn get_color(&self, rec: &HitRecord, world: Arc<Hittable>, col: &mut Color){
         let mut light_change = self.ambience;
         for light in &self.lights{
-            if !light.clone().is_shadow(rec, world) {
+            if !light.clone().is_shadow(rec, world.clone()) {
                 light_change = light_change + light.clone().color;
             }
         }

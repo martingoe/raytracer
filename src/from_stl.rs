@@ -1,57 +1,61 @@
 use crate::hittables::hittable::Hittable;
 use std::io::Read;
 use crate::hittables::triangle::Triangle;
-use crate::vec3::{Vec3, Color};
+use crate::vec3::{Vec3};
 use std::sync::Arc;
+use std::fs::File;
 use crate::material::Material;
 
-pub fn read_stl(file: String) -> Vec<Arc<dyn Hittable>> {
+pub fn read_stl(file: String, material: Arc<Material>) -> Vec<Arc<Hittable>> {
     let mut file = std::fs::File::open(file).expect("Cannot open the file");
 
-    let mut list_of_chunks = Vec::new();
-
-    let mut string: [u8; 80] = [0; 80];
-    file.by_ref().take(80).read_exact(&mut string);
-    let mut dier: Vec<u8> = Vec::new();
-    file.by_ref().take(4).read_to_end(&mut dier);
-    // let count = u32::from_be_bytes(dier.as_slice());
-    let mut finished = false;
-    while !finished {
-        for i in 0..5 {
-            let chunk_size = if i == 4 { 2 } else { 12 };
-            if i == 4 || i == 0 {
-                let mut vec = Vec::new();
-                file.by_ref().take(chunk_size).read_to_end(&mut vec);
-                continue;
-            }
-            let mut chunk = Vec::with_capacity(chunk_size as usize);
-            let n = file.by_ref().take(chunk_size as u64).read_to_end(&mut chunk).expect("Test");
-            chunk.reverse();
-            if n == 0 { finished = true; }
-            list_of_chunks.push(chunk);
-            if n < chunk_size as usize { finished = true; }
-        }
-    }
-    let mut vector: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut string: [u8; 84] = [0; 84];
+    file.by_ref().take(84).read_exact(&mut string).expect("Reading did not return a value. STL file must be malformed.");
+    let chunks =  read_chunks(&mut file);
+    let mut vector: Vec<Arc<Hittable>> = Vec::with_capacity(chunks.len());
     let mut i = 0;
-    while i < list_of_chunks.len() - 4 {
-        let mut x = list_of_chunks[i].as_slice();
+    while i < chunks.len() - 4 {
+        let mut x = chunks[i].as_slice();
         let a = get_vec3(&x);
-        x = list_of_chunks[i + 1].as_slice();
+        x = chunks[i + 1].as_slice();
         let b = get_vec3(&x);
-        x = list_of_chunks[i + 2].as_slice();
+        x = chunks[i + 2].as_slice();
         let c = get_vec3(&x);
-        vector.push(Arc::from(Triangle {
+        vector.push(Arc::from(Hittable::Triangle{triangle:Triangle {
             a,
             b,
             c,
-            material: Arc::from(Metal { albedo: Color { e: [0.8, 0.6, 0.2] }, fuzz: 0.1 }),
-        }));
+            material: material.clone(),
+
+        }}));
 
         i += 3;
     }
 
     return vector;
+}
+
+fn read_chunks(file: &mut File) -> Vec<Vec<u8>>{
+    let mut finished = false;
+    let mut result = Vec::new();
+    while !finished {
+        for i in 0..5 {
+            let chunk_size = if i == 4 { 2 } else { 12 };
+            if i == 4 || i == 0 {
+                let mut vec = Vec::new();
+                file.by_ref().take(chunk_size).read_to_end(&mut vec).expect("Could not read from the STL file.");
+                continue;
+            }
+            let mut chunk = Vec::with_capacity(chunk_size as usize);
+            let n = file.by_ref().take(chunk_size as u64).read_to_end(&mut chunk).expect("Could not read from the STL file.");
+            chunk.reverse();
+            if n == 0 { finished = true; }
+
+            result.push(chunk);
+            if n < chunk_size as usize { finished = true; }
+        }
+    }
+    return result;
 }
 
 fn get_vec3(x: &&[u8]) -> Vec3 {
