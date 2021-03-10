@@ -1,7 +1,7 @@
 use std::fs::File;
 use crate::vec3::Color;
 use std::io::Write;
-use crate::utils::clamp;
+use crate::utils::math_utils::clamp;
 
 pub fn write_color(file: &mut File, pixel_color: Color, samples_per_pixel: i32){
     let mut r = pixel_color.x();

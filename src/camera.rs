@@ -1,6 +1,6 @@
 use crate::vec3::{Vec3, cross, Point3};
-use crate::utils::deg_to_rad;
-use crate::ray::{Ray, create_ray};
+use crate::utils::math_utils::deg_to_rad;
+use crate::ray::Ray;
 
 
 #[derive(Clone, Copy)]
@@ -31,6 +31,6 @@ pub fn create_camera(look_from: Point3, look_at: Point3, vup: Vec3, vfov: f64, a
 
 impl Camera {
     pub(crate) fn get_ray(self, s: f64, t: f64) -> Ray {
-        return create_ray(self.origin, self.lower_left_corner + (self.horizontal * s) + (self.vertical * t) - self.origin);
+        return Ray::new(self.origin, self.lower_left_corner + (self.horizontal * s) + (self.vertical * t) - self.origin);
     }
 }
