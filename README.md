@@ -45,10 +45,13 @@ Run the program
 
 ## Examples
 ### Mengers Sponge M<sub>2</sub>
-![Cube](resources/renders/sponge.png)
+![Sponge](resources/renders/sponge.png)
 
 ### The Utah Teapot
-![Cube](resources/renders/teapot.png)
+![Teapot](resources/renders/teapot.png)
+
+### Eiffel Tower
+![EiffelTower](resources/renders/eiffeltower.png)
 
 ## Resources
 

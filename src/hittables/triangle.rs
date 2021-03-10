@@ -4,6 +4,7 @@ use crate::material::{Material};
 use std::sync::Arc;
 use std::f64::EPSILON;
 use crate::hittables::hittable::{HitRecord, HittableTrait};
+use crate::hittables::bvh::BBox;
 
 #[derive(Clone)]
 pub struct Triangle{
@@ -63,5 +64,7 @@ impl HittableTrait for  Triangle{
     fn get_mean_pos(&self) -> Vec3 {
         return (self.a + self.b + self.c) / 3.0;
     }
-
+    fn get_bbox(&self) -> BBox {
+        BBox{ bounds: [self.get_min_pos(), self.get_max_pos()] }
+    }
 }

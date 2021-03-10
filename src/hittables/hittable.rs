@@ -4,7 +4,7 @@ use crate::material::MaterialTrait;
 use crate::ray::Ray;
 use crate::vec3::{dot, Point3, Vec3};
 use crate::hittables::triangle::Triangle;
-use crate::hittables::bvh::Bvh;
+use crate::hittables::bvh::{Bvh, BBox};
 use crate::hittables::sphere::Sphere;
 use crate::hittables::hittable_list::HittableList;
 
@@ -36,6 +36,10 @@ pub trait HittableTrait: Send + Sync {
     fn get_min_pos(&self) -> Vec3;
     fn get_max_pos(&self) -> Vec3;
     fn get_mean_pos(&self) -> Vec3;
+    fn get_bbox(&self) -> BBox;
+}
+impl dyn HittableTrait {
+
 }
 
 #[allow(dead_code)]
@@ -47,6 +51,7 @@ pub enum Hittable {
 }
 
 impl HittableTrait for Hittable {
+
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         return match self {
             Hittable::Sphere { sphere } => sphere.hit(ray, t_min, t_max),
@@ -81,5 +86,9 @@ impl HittableTrait for Hittable {
             Hittable::Triangle { triangle } => triangle.get_mean_pos(),
             Hittable::HittableList { hittable_list } => hittable_list.get_mean_pos()
         };
+    }
+
+    fn get_bbox(&self) -> BBox {
+        BBox{ bounds: [self.get_min_pos(), self.get_max_pos()] }
     }
 }

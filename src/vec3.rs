@@ -1,5 +1,5 @@
-use std::ops;
-use crate::utils::random_double;
+use std::{ops, fmt};
+use crate::utils::math_utils::random_double;
 
 #[derive(Clone, Copy)]
 pub struct Vec3 {
@@ -48,6 +48,12 @@ pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
     return u.e[0] * v.e[0]
         + u.e[1] * v.e[1]
         + u.e[2] * v.e[2];
+}
+
+impl fmt::Display for Vec3 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.x(), self.y(), self.z())
+    }
 }
 
 impl ops::Add<Vec3> for Vec3{

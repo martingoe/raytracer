@@ -1,22 +1,22 @@
-use std::borrow::Borrow;
 use std::f64::{MAX, MIN};
 use std::sync::Arc;
 
 use crate::hittables::hittable::{HitRecord, Hittable, HittableTrait};
 use crate::ray::Ray;
+use crate::utils::morton_code::{get_pos_on_unit_cube, ploc};
 use crate::vec3::Vec3;
 
 #[derive(Clone)]
 pub struct Bvh {
-    bounds: BBox,
-    left: Arc<Hittable>,
-    right: Arc<Hittable>,
+    pub(crate) bounds: BBox,
+    pub(crate) left: Arc<Hittable>,
+    pub(crate) right: Arc<Hittable>,
 }
 
 
 impl HittableTrait for Bvh {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        if let (Hittable::Bvh { bvh }, Hittable::Bvh { bvh: bvh2 }) = (&self.left.borrow(), &self.right.borrow()) {
+        if let (Hittable::Bvh { bvh }, Hittable::Bvh { bvh: bvh2 }) = (&self.left.as_ref(), &self.right.as_ref()) {
             return self.both_bvh(bvh, bvh2, ray, t_min, t_max);
         }
         let left = self.left.hit(ray, t_min, t_max);
@@ -25,15 +25,18 @@ impl HittableTrait for Bvh {
     }
 
     fn get_min_pos(&self) -> Vec3 {
-        unimplemented!()
+        self.bounds.min()
     }
 
     fn get_max_pos(&self) -> Vec3 {
-        unimplemented!()
+        self.bounds.max()
     }
 
     fn get_mean_pos(&self) -> Vec3 {
-        unimplemented!()
+        Vec3 { e: [(self.bounds.max().e[0] + self.bounds.min().e[0]) / 2.0, (self.bounds.max().e[1] + self.bounds.min().e[1]) / 2.0, (self.bounds.max().e[2] + self.bounds.min().e[2]) / 2.0] }
+    }
+    fn get_bbox(&self) -> BBox {
+        BBox { bounds: [self.get_min_pos(), self.get_max_pos()] }
     }
 }
 
@@ -47,6 +50,7 @@ impl Bvh {
             return right.hit(ray, t_min, t_max);
         } else if left_intersect.is_some() && right_intersect.is_some() {
             let left_t = left_intersect.unwrap();
+
             let right_t = right_intersect.unwrap();
             return if left_t < right_t {
                 Bvh::get_closest_hit(right, left, ray, t_min, t_max, right_t)
@@ -90,21 +94,29 @@ pub fn initiate_bvh(elements: &mut Vec<Arc<Hittable>>) -> Arc<Hittable> {
     if elements.len() == 1 {
         return elements[0].clone();
     }
+
     let b_box = surround(elements);
+    if elements.len() == 2 {
+        return Arc::from(Hittable::Bvh {
+            bvh: Bvh {
+                bounds: b_box,
+                left: elements[0].clone(),
+                right: elements[1].clone(),
+            }
+        });
+    }
     let axis = get_axis(&b_box);
 
-    let pivot = (b_box.max().e[axis as usize] + b_box.min().e[axis as usize]) / 2.0;
-    let half = mean_split(&mut elements.clone(), axis, pivot);
+    let (half, new_elements) = mean_split(elements.clone(), axis, &b_box);
     println!("Previous: {}, Now: {}", elements.len(), half);
 
-    let left = initiate_bvh(&mut elements[..half as usize].to_vec());
-    let right = initiate_bvh(&mut elements[half as usize..].to_vec());
+    let left = initiate_bvh(&mut new_elements[..half as usize].to_vec());
+    let right = initiate_bvh(&mut new_elements[half as usize..].to_vec());
     return Arc::from(Hittable::Bvh {
         bvh: Bvh {
             bounds: b_box,
             left,
             right,
-
         }
     });
 }
@@ -123,8 +135,9 @@ fn get_axis(bbox: &BBox) -> i32 {
     return 2;
 }
 
-fn mean_split(elements: &mut Vec<Arc<Hittable>>, axis: i32, pivot: f64) -> i32 {
-    // let pivot = elements.iter().fold(0.0 as f64, |acc, x| acc + x.get_mean_pos().e[axis as usize]) / elements.len() as f64;
+fn mean_split(mut elements: Vec<Arc<Hittable>>, axis: i32, b_box: &BBox) -> (i32, Vec<Arc<Hittable>>) {
+
+    let pivot = elements.iter().fold(0.0 as f64, |acc, x| acc + x.get_mean_pos().e[axis as usize]) / elements.len() as f64;
     let mut count = 0;
     for i in 0..elements.len() {
         let x = elements[i].get_mean_pos().e[axis as usize];
@@ -141,10 +154,11 @@ fn mean_split(elements: &mut Vec<Arc<Hittable>>, axis: i32, pivot: f64) -> i32 {
         count += 1;
     }
 
-    return count as i32;
+
+    return (count as i32, elements);
 }
 
-fn surround(elements: &Vec<Arc<Hittable>>) -> BBox {
+pub fn surround(elements: &Vec<Arc<Hittable>>) -> BBox {
     let x_min = elements.iter().fold(MAX, |acc, x| acc.min((*x).get_min_pos().x()));
     let y_min = elements.iter().fold(MAX, |acc, x| acc.min((*x).get_min_pos().y()));
     let z_min = elements.iter().fold(MAX, |acc, x| acc.min((*x).get_min_pos().z()));
@@ -159,8 +173,8 @@ fn surround(elements: &Vec<Arc<Hittable>>) -> BBox {
 
 
 #[derive(Clone)]
-struct BBox {
-    bounds: [Vec3; 2]
+pub struct BBox {
+    pub(crate) bounds: [Vec3; 2]
 }
 
 impl BBox {
@@ -169,6 +183,38 @@ impl BBox {
     }
     fn min(&self) -> Vec3 {
         return self.bounds[0];
+    }
+    fn surface(&self) -> f64 {
+        let l = self.bounds[1].x() - self.bounds[0].x();
+        let w = self.bounds[1].y() - self.bounds[0].y();
+        let h = self.bounds[1].z() - self.bounds[0].z();
+        2.0 * (l * w + l * h + w * h)
+    }
+    pub(crate) fn half_area(&self) -> f64 {
+        let extents = [
+            self.max().e[0] - self.min().e[0],
+            self.max().e[1] - self.min().e[1],
+            self.max().e[2] - self.min().e[2]
+        ];
+        return extents[0] * (extents[1] + extents[2]) + extents[1] * extents[2];
+    }
+    pub(crate) fn union(&self, other: &BBox) -> BBox {
+        return BBox {
+            bounds: [Vec3 {
+                e: [
+                    if self.min().e[0] < other.min().e[0] { self.min().e[0] } else { other.min().e[0] },
+                    if self.min().e[1] < other.min().e[1] { self.min().e[1] } else { other.min().e[1] },
+                    if self.min().e[2] < other.min().e[2] { self.min().e[2] } else { other.min().e[2] }
+                ]
+            },
+                Vec3 {
+                    e: [
+                        if self.max().e[0] < other.max().e[0] { self.max().e[0] } else { other.max().e[0] },
+                        if self.max().e[1] < other.max().e[1] { self.max().e[1] } else { other.max().e[1] },
+                        if self.max().e[2] < other.max().e[2] { self.max().e[2] } else { other.max().e[2] }
+                    ]
+                }]
+        };
     }
     pub fn ray_intersects(&self, ray: &Ray, t0: f64, t1: f64) -> Option<f64> {
         let mut t_min = (self.bounds[ray.sign[0]].x() - ray.origin.x()) * ray.inv_direction.x();

@@ -3,6 +3,7 @@ use crate::ray::Ray;
 use std::sync::Arc;
 use crate::material::{Material};
 use crate::hittables::hittable::{HitRecord, HittableTrait};
+use crate::hittables::bvh::BBox;
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -49,5 +50,9 @@ impl HittableTrait for Sphere{
 
     fn get_mean_pos(&self) -> Vec3 {
         return self.position;
+    }
+
+    fn get_bbox(&self) -> BBox {
+        BBox{ bounds: [self.get_min_pos(), self.get_max_pos()] }
     }
 }
