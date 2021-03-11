@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::hittables::hittable::{HitRecord, Hittable, HittableTrait};
 use crate::ray::Ray;
-use crate::utils::morton_code::{get_pos_on_unit_cube, ploc};
+use crate::utils::morton_code::{get_pos_on_unit_cube, bvh_morton};
 use crate::vec3::Vec3;
 
 #[derive(Clone)]
@@ -107,11 +107,11 @@ pub fn initiate_bvh(elements: &mut Vec<Arc<Hittable>>) -> Arc<Hittable> {
     }
     let axis = get_axis(&b_box);
 
-    let (half, new_elements) = mean_split(elements.clone(), axis, &b_box);
+    let half = mean_split(elements, axis);
     println!("Previous: {}, Now: {}", elements.len(), half);
 
-    let left = initiate_bvh(&mut new_elements[..half as usize].to_vec());
-    let right = initiate_bvh(&mut new_elements[half as usize..].to_vec());
+    let left = initiate_bvh(&mut elements[..half as usize].to_vec());
+    let right = initiate_bvh(&mut elements[half as usize..].to_vec());
     return Arc::from(Hittable::Bvh {
         bvh: Bvh {
             bounds: b_box,
@@ -135,8 +135,7 @@ fn get_axis(bbox: &BBox) -> i32 {
     return 2;
 }
 
-fn mean_split(mut elements: Vec<Arc<Hittable>>, axis: i32, b_box: &BBox) -> (i32, Vec<Arc<Hittable>>) {
-
+fn mean_split(elements: &mut Vec<Arc<Hittable>>, axis: i32) -> i32 {
     let pivot = elements.iter().fold(0.0 as f64, |acc, x| acc + x.get_mean_pos().e[axis as usize]) / elements.len() as f64;
     let mut count = 0;
     for i in 0..elements.len() {
@@ -155,7 +154,7 @@ fn mean_split(mut elements: Vec<Arc<Hittable>>, axis: i32, b_box: &BBox) -> (i32
     }
 
 
-    return (count as i32, elements);
+    return count as i32;
 }
 
 pub fn surround(elements: &Vec<Arc<Hittable>>) -> BBox {

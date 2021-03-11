@@ -54,8 +54,8 @@ fn gen_tree(sorted_hittables: &Vec<Arc<Hittable>>, codes: &Vec<u64>, start: usiz
         return sorted_hittables[start].clone();
     }
 
+    let b_box = surround(&sorted_hittables[start..=end].to_vec());
     if start + 1 == end {
-        let b_box = surround(sorted_hittables);
         return Arc::from(Hittable::Bvh {
             bvh: Bvh {
                 bounds: b_box,
@@ -69,8 +69,6 @@ fn gen_tree(sorted_hittables: &Vec<Arc<Hittable>>, codes: &Vec<u64>, start: usiz
 
     let left = gen_tree(sorted_hittables, codes, start, half);
     let right = gen_tree(sorted_hittables, codes, half + 1, end);
-    let b_box = surround(&sorted_hittables[start..=end].to_vec());
-    // let right = gen_tree(&mut sorted_hittables.clone()[half as usize..].to_vec());
     return Arc::from(Hittable::Bvh {
         bvh: Bvh {
             bounds: b_box,

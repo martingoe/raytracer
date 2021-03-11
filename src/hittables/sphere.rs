@@ -4,12 +4,20 @@ use std::sync::Arc;
 use crate::material::{Material};
 use crate::hittables::hittable::{HitRecord, HittableTrait};
 use crate::hittables::bvh::BBox;
+use std::f64::consts::PI;
 
 #[derive(Clone)]
 pub struct Sphere {
     pub(crate) position: Point3,
     pub(crate) radius: f64,
     pub(crate) material: Arc<Material>,
+}
+impl Sphere{
+    fn get_uv(&self, p: Point3) -> (f64, f64){
+        let u = 0.5 + (p.x().atan2(p.z())) / 2.0 * PI;
+        let v = 0.5 - (p.y().asin()) / PI;
+        return (u, v);
+    }
 }
 
 impl HittableTrait for Sphere{
@@ -33,8 +41,9 @@ impl HittableTrait for Sphere{
             }
         }
         let point = ray.at(t);
-        let normal = point - self.position;
-        let mut rec = HitRecord { point, normal, material: self.material.clone(), t, front_face: false };
+        let normal = (point - self.position) / self.radius;
+        let (u, v) = self.get_uv(normal);
+        let mut rec = HitRecord { point, normal, material: self.material.clone(), t, u, v, front_face: false };
         rec.set_face_normal(ray, &normal);
 
         return Option::from(rec);

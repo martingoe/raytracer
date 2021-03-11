@@ -21,13 +21,7 @@ pub fn read_stl(file: String, material: Arc<Material>) -> Vec<Arc<Hittable>> {
         let b = get_vec3(&x);
         x = chunks[i + 2].as_slice();
         let c = get_vec3(&x);
-        vector.push(Arc::from(Hittable::Triangle{triangle:Triangle {
-            a,
-            b,
-            c,
-            material: material.clone(),
-
-        }}));
+        vector.push(Arc::from(Hittable::Triangle{ triangle: Triangle::new(a, b, c, material.clone()) }));
 
         i += 3;
     }

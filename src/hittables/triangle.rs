@@ -11,7 +11,22 @@ pub struct Triangle{
     pub(crate) a: Point3,
     pub(crate) b: Point3,
     pub(crate) c: Point3,
-    pub(crate) material: Arc<Material>
+    pub(crate) n: Vec3,
+    pub(crate) texture: Arc<Material>
+}
+impl Triangle{
+    pub fn new(a: Point3, b: Point3, c: Point3, material: Arc<Material>) -> Triangle{
+        let ab = b - a;
+        let ac = c - a;
+        let n = cross(&ab, &ac).unit_vector();
+        return Triangle{
+            a,
+            b,
+            c,
+            n,
+            texture: material
+        }
+    }
 }
 impl HittableTrait for  Triangle{
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
@@ -41,9 +56,9 @@ impl HittableTrait for  Triangle{
         if t < t_min || t > t_max {
             return None;
         }
-        let normal = cross(&ac, &ab).unit_vector();
-        let mut record = HitRecord { point: ray.at(t), normal, material: self.material.clone(), t, front_face: false };
-        record.set_face_normal(ray, &normal);
+
+        let mut record = HitRecord { point: ray.at(t), normal: self.n, material: self.texture.clone(), t, u, v, front_face: false };
+        record.set_face_normal(ray, &self.n);
         return Option::from(record);
     }
 

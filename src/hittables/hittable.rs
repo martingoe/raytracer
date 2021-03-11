@@ -14,6 +14,8 @@ pub struct HitRecord {
     pub(crate) normal: Vec3,
     pub(crate) material: Arc<dyn MaterialTrait>,
     pub(crate) t: f64,
+    pub(crate) u: f64,
+    pub(crate) v: f64,
     pub(crate) front_face: bool,
 }
 
@@ -38,10 +40,6 @@ pub trait HittableTrait: Send + Sync {
     fn get_mean_pos(&self) -> Vec3;
     fn get_bbox(&self) -> BBox;
 }
-impl dyn HittableTrait {
-
-}
-
 #[allow(dead_code)]
 pub enum Hittable {
     Sphere { sphere: Sphere },

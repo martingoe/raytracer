@@ -18,8 +18,9 @@ use crate::hittables::hittable::{Hittable, HittableTrait};
 use crate::hittables::hittable_list::HittableList;
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::utils::morton_code::ploc;
+use crate::utils::morton_code::bvh_morton;
 use crate::vec3::{Color, create_vec_3, Vec3};
+use crate::textures::texture::Texture;
 
 mod vec3;
 mod camera;
@@ -29,6 +30,7 @@ mod color;
 pub mod material;
 mod from_stl;
 mod utils;
+mod textures;
 
 
 fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
@@ -50,27 +52,27 @@ fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
 
 fn main() {
     let aspect_ratio: f64 = 16.0 / 9.0;
-    let width: i32 = 300;
+    let width: i32 = 1280;
     let height: i32 = (width as f64 / aspect_ratio) as i32;
 
-    let mut look_from = create_vec_3(0.0, 0.0, 15.0);
+    let mut look_from = create_vec_3(-5.5, 0.0, 0.0);
     let look_at = create_vec_3(0.0, 0.0, 0.0);
     let vup = create_vec_3(0.0, 1.0, 0.0);
 
     let mut cam = create_camera(look_from, look_at, vup, 100.0, aspect_ratio, 2.0);
 
-    let samples_per_pixel = 100;
-    let depth = 50;
+    let samples_per_pixel = 150;
+    let depth = 75;
 
 
 
-    let mut vec = read_stl("resources/stl/bunny.stl".parse().unwrap(), Arc::new(Material::Metal { albedo: Color { e: [0.0, 1.0, 1.0] }, fuzz: 0.05, emission: Vec3 { e: [0.0, 0.0, 0.0] } }));
-    // vec.append(&mut read_stl("resources/stl/troopers_black.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Color { e: [0.05, 0.05, 0.05] }, emission: Vec3 { e: [0.0, 0.0, 0.0] } })));
-    // vec.append(&mut read_stl("resources/stl/troopers_lights.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Color { e: [0.82, 0.23, 0.23] }, emission: Vec3 { e: [5.7, 1.63, 1.63] } })));
+    let mut vec = read_stl("resources/stl/troopers_white.stl".parse().unwrap(), Arc::new(Material::Metal { albedo: Texture::Solid {color: Color { e: [1.0, 1.0, 1.0] }}, fuzz: 0.05, emission: Vec3 { e: [0.0, 0.0, 0.0] } }));
+    vec.append(&mut read_stl("resources/stl/troopers_black.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid {color: Color { e: [0.05, 0.05, 0.05] }}, emission: Vec3 { e: [0.0, 0.0, 0.0] } })));
+    vec.append(&mut read_stl("resources/stl/troopers_lights.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid { color: Color{e: [0.82, 0.23, 0.23] }}, emission: Vec3 { e: [8.2, 2.3, 2.3] } })));
 
     // let world_box = aac(&vec, &surround(&vec.clone()));
     let before_bvh = Instant::now();
-    let world_box = ploc(&mut vec);
+    let world_box = bvh_morton(&mut vec);
     // let world_box = initiate_bvh(&mut vec);
     let time = before_bvh.elapsed().as_secs();
 
