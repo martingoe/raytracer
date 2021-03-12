@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::hittables::hittable::{HitRecord, Hittable, HittableTrait};
 use crate::ray::Ray;
-use crate::utils::morton_code::{get_pos_on_unit_cube, bvh_morton};
+use crate::utils::morton_code::bvh_morton;
 use crate::vec3::Vec3;
 
 #[derive(Clone)]

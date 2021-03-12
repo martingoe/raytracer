@@ -1,9 +1,10 @@
 use crate::vec3::{Color, Point3};
+use crate::noises::perlin_noise::PerlinNoise;
 
-#[derive(Copy, Clone)]
 pub enum Texture {
     Solid { color: Color },
     Checker { color1: Color, color2: Color, size: f64 },
+    Perlin {perlin_noise: PerlinNoise, scale: f64, color1: Color, color2: Color}
 }
 
 impl Texture {
@@ -17,6 +18,10 @@ impl Texture {
                 } else {
                     *color2
                 }
+            }
+            Texture::Perlin { perlin_noise, scale, color1, color2 } => {
+                let value = perlin_noise.get_value(p.x() * scale, p.y() * scale, p.z() * scale);
+                return *color1 * value + *color2 * (1.0 - value);
             }
         }
     }
