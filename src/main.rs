@@ -13,12 +13,12 @@ use crate::camera::create_camera;
 use crate::color::write_color;
 use crate::hittables::hittable::{Hittable, HittableTrait};
 use crate::material::Material;
-use crate::ray::Ray;
-use crate::utils::morton_code::bvh_morton;
-use crate::vec3::{Color, create_vec_3, Vec3};
-use crate::textures::texture::Texture;
 use crate::noises::perlin_noise::PerlinNoise;
 use crate::parsers::from_stl::read_stl;
+use crate::ray::Ray;
+use crate::textures::texture::Texture;
+use crate::utils::morton_code::bvh_morton;
+use crate::vec3::{Color, create_vec_3, Vec3};
 
 mod vec3;
 mod camera;
@@ -54,7 +54,7 @@ fn main() {
     let width: i32 = 300;
     let height: i32 = (width as f64 / aspect_ratio) as i32;
 
-    let look_from = create_vec_3(2.0, 2.0, 2.0);
+    let look_from = create_vec_3(0.0, 0.0, 3.0);
     let look_at = create_vec_3(0.0, 0.0, 0.0);
     let vup = create_vec_3(0.0, 1.0, 0.0);
 
@@ -63,7 +63,7 @@ fn main() {
     let samples_per_pixel = 150;
     let depth = 75;
 
-    let mut vec = read_stl("resources/stl/untitled.stl".parse().unwrap(), Arc::new(Material::Metal { albedo: Texture::Perlin { perlin_noise: PerlinNoise::new(), scale: 1.0, color1: Color { e: [0.0, 0.0, 1.0] }, color2: Vec3 {e: [1.0, 1.0, 0.0]} }, fuzz: 0.05, emission: Vec3 { e: [0.0, 0.0, 0.0] } }));
+    let mut vec = read_stl("resources/stl/untitled.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Perlin { perlin_noise: PerlinNoise::new(), scale: 3.0, color1: Color { e: [1.0, 1.0, 1.0] }, color2: Vec3 {e: [0.0, 0.0, 0.0]} }, emission: Vec3 { e: [0.0, 0.0, 0.0] } }));
     // vec.append(&mut read_stl("resources/stl/troopers_black.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid {color: Color { e: [0.05, 0.05, 0.05] }}, emission: Vec3 { e: [0.0, 0.0, 0.0] } })));
     // vec.append(&mut read_stl("resources/stl/troopers_lights.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid { color: Color{e: [0.82, 0.23, 0.23] }}, emission: Vec3 { e: [8.2, 2.3, 2.3] } })));
 
@@ -118,7 +118,6 @@ fn main() {
     for i in 0..x.len() {
         write_color(&mut file, x[i], samples_per_pixel as i32);
     }
-    file.flush();
 
     let time_2 = before_render.elapsed().as_secs();
     println!("Time for BVH: {}", time);

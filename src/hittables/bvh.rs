@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use crate::hittables::hittable::{HitRecord, Hittable, HittableTrait};
 use crate::ray::Ray;
-use crate::utils::morton_code::bvh_morton;
 use crate::vec3::Vec3;
 
 #[derive(Clone)]
@@ -90,6 +89,7 @@ fn return_closest(left: Option<HitRecord>, right: Option<HitRecord>) -> Option<H
 }
 
 
+#[allow(dead_code)]
 pub fn initiate_bvh(elements: &mut Vec<Arc<Hittable>>) -> Arc<Hittable> {
     if elements.len() == 1 {
         return elements[0].clone();
@@ -183,12 +183,7 @@ impl BBox {
     fn min(&self) -> Vec3 {
         return self.bounds[0];
     }
-    fn surface(&self) -> f64 {
-        let l = self.bounds[1].x() - self.bounds[0].x();
-        let w = self.bounds[1].y() - self.bounds[0].y();
-        let h = self.bounds[1].z() - self.bounds[0].z();
-        2.0 * (l * w + l * h + w * h)
-    }
+
     pub(crate) fn half_area(&self) -> f64 {
         let extents = [
             self.max().e[0] - self.min().e[0],

@@ -3,10 +3,9 @@ use std::sync::Arc;
 use crate::color_at;
 use crate::hittables::hittable::{HitRecord, Hittable};
 use crate::ray::Ray;
-use crate::utils::math_utils::random_double;
-use crate::vec3::{Color, dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract, Vec3};
 use crate::textures::texture::Texture;
-use crate::material::Material::Diffuse;
+use crate::utils::math_utils::random_double;
+use crate::vec3::{Color, dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract};
 
 pub(crate) trait MaterialTrait: Send + Sync {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, depth: i32, world: Arc<Hittable>) -> Option<Color>;
@@ -17,29 +16,23 @@ pub enum Material {
     Metal { albedo: Texture, fuzz: f64, emission: Color },
     Diffuse { albedo: Texture, emission: Color },
 }
-impl Material {
-    fn new_diffuse(c: Color) -> Material{
-        return Diffuse { albedo: Texture::Solid {color: c}, emission: Vec3 { e: [0.0, 0.0, 0.0]} }
-    }
-}
 
 impl MaterialTrait for Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, depth: i32, world: Arc<Hittable>) -> Option<Color> {
         match self {
             Material::Dielectric { ir, tint, emission } => {
-                let refraction_ratio = if rec.front_face { 1.0 / ir } else { *ir };
+                let refraction_ratio = if rec.front_face {1.0 / *ir} else  {*ir};
 
                 let unit_direction = r_in.direction.unit_vector();
                 let cos_theta = dot(&-unit_direction, &rec.normal).min(1.0);
                 let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
                 let cannot_refract = refraction_ratio * sin_theta > 1.0;
-                let direction: Vec3;
-                if cannot_refract || schlicks(cos_theta, refraction_ratio) > random_double(0.0, 1.0) {
-                    direction = reflect(&unit_direction, &rec.normal);
+                let direction= if cannot_refract || schlicks(cos_theta, refraction_ratio) > random_double(0.0, 1.0) {
+                    reflect(&unit_direction, &rec.normal)
                 } else {
-                    direction = refract(&unit_direction, &rec.normal, refraction_ratio);
-                }
+                    refract(&unit_direction, &rec.normal, refraction_ratio)
+                };
                 return Some(*emission + tint.value_at(rec.u, rec.v, rec.point) * color_at(&Ray::new(rec.point, direction), world.clone(), depth - 1));
             }
 

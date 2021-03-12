@@ -19,13 +19,7 @@ impl Triangle{
         let ab = b - a;
         let ac = c - a;
         let n = cross(&ab, &ac).unit_vector();
-        return Triangle{
-            a,
-            b,
-            c,
-            n,
-            texture: material
-        }
+        return Triangle{ a, b, c, n, texture: material }
     }
 }
 impl HittableTrait for  Triangle{

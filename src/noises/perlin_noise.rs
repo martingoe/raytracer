@@ -1,5 +1,4 @@
 use rand::Rng;
-use rand::thread_rng;
 
 const PERMUTATION: [i32; 256] = [151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36,
     103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0,
@@ -21,9 +20,6 @@ pub struct PerlinNoise {
     p: [i32; 512]
 }
 
-fn dot2d(xy1: (f64, f64), xy2: (f64, f64)) -> f64 {
-    return xy1.0 * xy2.0 + xy1.1 * xy2.1;
-}
 
 fn fade(x: f64) -> f64 {
     x * x * x * (x * (x * 6.0 - 15.0) + 10.0)
@@ -41,17 +37,6 @@ fn grad(hash: i32, x: f64, y: f64, z: f64) -> f64 {
     let v = if h < 4 { y } else { if h == 12 || h == 14 { x } else { z } };
 
     return (if h & 1 == 0 { u } else { -u }) + (if h & 2 == 0 { v } else { -v });
-}
-
-fn get_const_vec(v: i32) -> (f64, f64) {
-    //v is the value from the permutation table
-    let h = v & 3;
-    return match h {
-        0 => (1.0, 1.0),
-        1 => (-1.0, 1.0),
-        2 => (-1.0, -1.0),
-        _ => (1.0, -1.0)
-    };
 }
 
 impl PerlinNoise {

@@ -1,6 +1,3 @@
-use std::borrow::Borrow;
-use std::f64::MAX;
-use std::process::exit;
 use std::sync::Arc;
 
 use crate::hittables::bvh::{BBox, Bvh, surround};
@@ -76,23 +73,6 @@ fn gen_tree(sorted_hittables: &Vec<Arc<Hittable>>, codes: &Vec<u64>, start: usiz
             right,
         }
     });
-}
-
-
-fn find_best_node(node_id: usize, nodes: &Vec<Arc<Hittable>>, search_radius: usize, distance_matrix: &Vec<Vec<f64>>) -> usize {
-    let mut best_id = node_id;
-    let mut best_distance = MAX;
-
-    let begin = if node_id > search_radius { node_id - search_radius } else { 0 };
-    let end = if node_id + search_radius < nodes.len() { node_id + search_radius } else { nodes.len() - 1 };
-    for other_id in begin..end {
-        let distance = nodes[node_id].clone().get_bbox().union(&nodes[other_id].clone().get_bbox()).half_area();
-        if distance < best_distance && node_id != other_id {
-            best_distance = distance;
-            best_id = other_id;
-        }
-    }
-    return best_id;
 }
 
 fn split(vec: &Vec<u64>, first: usize, last: usize) -> usize {
