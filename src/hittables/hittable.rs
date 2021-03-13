@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
+use crate::hittables::hittable_list::HittableList;
+use crate::hittables::sphere::Sphere;
+use crate::hittables::triangle::Triangle;
 use crate::material::MaterialTrait;
+use crate::optimizations::bvh::{BBox, Bvh};
 use crate::ray::Ray;
 use crate::vec3::{dot, Point3, Vec3};
-use crate::hittables::triangle::Triangle;
-use crate::hittables::bvh::{Bvh, BBox};
-use crate::hittables::sphere::Sphere;
-use crate::hittables::hittable_list::HittableList;
-
 
 pub struct HitRecord {
     pub(crate) point: Point3,
@@ -22,7 +21,11 @@ pub struct HitRecord {
 impl HitRecord {
     pub(crate) fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vec3) {
         self.front_face = dot(&r.direction, outward_normal) < 0.0;
-        self.normal = if self.front_face { *outward_normal } else { -*outward_normal };
+        self.normal = if self.front_face {
+            *outward_normal
+        } else {
+            -*outward_normal
+        };
     }
 }
 
@@ -49,13 +52,12 @@ pub enum Hittable {
 }
 
 impl HittableTrait for Hittable {
-
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         return match self {
             Hittable::Sphere { sphere } => sphere.hit(ray, t_min, t_max),
             Hittable::Bvh { bvh } => bvh.hit(ray, t_min, t_max),
             Hittable::Triangle { triangle } => triangle.hit(ray, t_min, t_max),
-            Hittable::HittableList { hittable_list } => hittable_list.hit(ray, t_min, t_max)
+            Hittable::HittableList { hittable_list } => hittable_list.hit(ray, t_min, t_max),
         };
     }
 
@@ -64,7 +66,7 @@ impl HittableTrait for Hittable {
             Hittable::Sphere { sphere } => sphere.get_min_pos(),
             Hittable::Bvh { bvh } => bvh.get_min_pos(),
             Hittable::Triangle { triangle } => triangle.get_min_pos(),
-            Hittable::HittableList { hittable_list } => hittable_list.get_min_pos()
+            Hittable::HittableList { hittable_list } => hittable_list.get_min_pos(),
         };
     }
 
@@ -73,7 +75,7 @@ impl HittableTrait for Hittable {
             Hittable::Sphere { sphere } => sphere.get_max_pos(),
             Hittable::Bvh { bvh } => bvh.get_max_pos(),
             Hittable::Triangle { triangle } => triangle.get_max_pos(),
-            Hittable::HittableList { hittable_list } => hittable_list.get_max_pos()
+            Hittable::HittableList { hittable_list } => hittable_list.get_max_pos(),
         };
     }
 
@@ -82,11 +84,13 @@ impl HittableTrait for Hittable {
             Hittable::Sphere { sphere } => sphere.get_mean_pos(),
             Hittable::Bvh { bvh } => bvh.get_mean_pos(),
             Hittable::Triangle { triangle } => triangle.get_mean_pos(),
-            Hittable::HittableList { hittable_list } => hittable_list.get_mean_pos()
+            Hittable::HittableList { hittable_list } => hittable_list.get_mean_pos(),
         };
     }
 
     fn get_bbox(&self) -> BBox {
-        BBox{ bounds: [self.get_min_pos(), self.get_max_pos()] }
+        BBox {
+            bounds: [self.get_min_pos(), self.get_max_pos()],
+        }
     }
 }

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::hittables::bvh::{BBox, Bvh, surround};
 use crate::hittables::hittable::{Hittable, HittableTrait};
+use crate::optimizations::bvh::{surround, BBox, Bvh};
 use crate::vec3::Vec3;
 
 pub fn get_pos_on_unit_cube(pos: &Vec3, b_box: &BBox) -> Vec3 {
@@ -22,7 +22,7 @@ fn expand_bits(int: u64) -> u64 {
     return v;
 }
 
-fn morton_3d(pos: Vec3, b_box: &BBox) -> u64 {
+pub fn morton_3d(pos: Vec3, b_box: &BBox) -> u64 {
     // https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
     let unit_positions = get_pos_on_unit_cube(&pos, b_box);
     let x = ((unit_positions.x() * 1024.0).max(0.0)).min(1023.0);
@@ -34,75 +34,6 @@ fn morton_3d(pos: Vec3, b_box: &BBox) -> u64 {
     return xx * 4 + yy * 2 + zz;
 }
 
-
-
-pub fn bvh_morton(hittables: &mut Vec<Arc<Hittable>>) -> Arc<Hittable> {
-    let b_box = surround(hittables);
-    let mut morton_codes: Vec<u64> = Vec::new();
-    for i in hittables.iter() {
-        morton_codes.push(morton_3d(i.get_mean_pos(), &b_box));
-    }
-    radix_sort(hittables, &mut morton_codes);
-    return gen_tree(&hittables, &morton_codes, 0, morton_codes.len() - 1);
-}
-
-fn gen_tree(sorted_hittables: &Vec<Arc<Hittable>>, codes: &Vec<u64>, start: usize, end: usize) -> Arc<Hittable> {
-    if end == start {
-        return sorted_hittables[start].clone();
-    }
-
-    let b_box = surround(&sorted_hittables[start..=end].to_vec());
-    if start + 1 == end {
-        return Arc::from(Hittable::Bvh {
-            bvh: Bvh {
-                bounds: b_box,
-                left: sorted_hittables[start].clone(),
-                right: sorted_hittables[end].clone(),
-            }
-        });
-    }
-    let half = split(&codes, start, end);
-    println!("Previous: {}, Now: {}", end - start, half - start);
-
-    let left = gen_tree(sorted_hittables, codes, start, half);
-    let right = gen_tree(sorted_hittables, codes, half + 1, end);
-    return Arc::from(Hittable::Bvh {
-        bvh: Bvh {
-            bounds: b_box,
-            left,
-            right,
-        }
-    });
-}
-
-fn split(vec: &Vec<u64>, first: usize, last: usize) -> usize {
-    let first_code = vec[first];
-    let last_code = vec[last];
-    if first_code == last_code {
-        return (first + last) >> 1;
-    }
-    let common_prefix = (first_code ^ last_code).leading_zeros();
-
-    // Binary search
-    let mut split = first;
-    let mut step = last - first;
-    while {
-        step = (step + 1) / 2;
-        let new_split = split + step;
-        if new_split < last {
-            let split_code = vec[new_split];
-            let split_prefix = (first_code ^ split_code).leading_zeros();
-            if split_prefix > common_prefix {
-                split = new_split;
-            }
-        }
-        step > 1
-    } {}
-
-
-    return split;
-}
-
 fn get_max(vec: &Vec<u64>) -> u64 {
     let mut max = vec[0];
     for i in vec.iter() {
@@ -111,7 +42,11 @@ fn get_max(vec: &Vec<u64>) -> u64 {
     return max;
 }
 
-fn count_sort(values: &Vec<Arc<Hittable>>, codes: &Vec<u64>, exp: u64) -> (Vec<Arc<Hittable>>, Vec<u64>) {
+fn count_sort(
+    values: &Vec<Arc<Hittable>>,
+    codes: &Vec<u64>,
+    exp: u64,
+) -> (Vec<Arc<Hittable>>, Vec<u64>) {
     let mut count = [0; 10];
     let mut dup_values = values.clone();
     let mut dup_codes = codes.clone();

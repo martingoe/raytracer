@@ -1,9 +1,9 @@
-use std::fs::File;
-use crate::vec3::Color;
-use std::io::Write;
 use crate::utils::math_utils::clamp;
+use crate::vec3::Color;
+use std::fs::File;
+use std::io::Write;
 
-pub fn write_color(file: &mut File, pixel_color: Color, samples_per_pixel: i32){
+pub fn write_color(file: &mut File, pixel_color: Color, samples_per_pixel: i32) {
     let mut r = pixel_color.x();
     let mut g = pixel_color.y();
     let mut b = pixel_color.z();

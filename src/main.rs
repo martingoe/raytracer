@@ -1,8 +1,8 @@
 use std::f64::INFINITY;
 use std::fs::File;
 use std::io::Write;
-use std::sync::Arc;
 use std::sync::mpsc::channel;
+use std::sync::Arc;
 use std::time::Instant;
 
 use threadpool::ThreadPool;
@@ -14,23 +14,24 @@ use crate::color::write_color;
 use crate::hittables::hittable::{Hittable, HittableTrait};
 use crate::material::Material;
 use crate::noises::perlin_noise::PerlinNoise;
+use crate::optimizations::bvh::Bvh;
 use crate::parsers::from_stl::read_stl;
+use crate::parsers::obj::read_obj;
 use crate::ray::Ray;
 use crate::textures::texture::Texture;
-use crate::utils::morton_code::bvh_morton;
-use crate::vec3::{Color, create_vec_3, Vec3};
+use crate::vec3::{create_vec_3, Color, Vec3};
 
-mod vec3;
 mod camera;
-mod ray;
-mod hittables;
 mod color;
+mod hittables;
 pub mod material;
-mod utils;
-mod textures;
 mod noises;
+mod optimizations;
 mod parsers;
-
+mod ray;
+mod textures;
+mod utils;
+mod vec3;
 
 fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
     if depth == 0 {
@@ -40,7 +41,10 @@ fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
     let option = world.clone().hit(r, 0.0001, INFINITY);
     if !option.is_none() {
         let rec = option.unwrap();
-        return rec.material.scatter(r, &rec, depth, world.clone()).unwrap_or(Color { e: [0.0, 0.0, 0.0] });
+        return rec
+            .material
+            .scatter(r, &rec, depth, world.clone())
+            .unwrap_or(Color { e: [0.0, 0.0, 0.0] });
     }
 
     let unit_direction = r.direction.unit_vector();
@@ -48,19 +52,18 @@ fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
     return Color { e: [1.0, 1.0, 1.0] } * (1.0 - t) + Color { e: [0.5, 0.7, 1.0] } * t;
 }
 
-
 fn main() {
     let aspect_ratio: f64 = 16.0 / 9.0;
     let width: i32 = 300;
     let height: i32 = (width as f64 / aspect_ratio) as i32;
 
-    let look_from = create_vec_3(0.0, 0.0, 3.0);
+    let look_from = create_vec_3(1.5, 0.5, -2.0);
     let look_at = create_vec_3(0.0, 0.0, 0.0);
     let vup = create_vec_3(0.0, 1.0, 0.0);
 
     let cam = create_camera(look_from, look_at, vup, 100.0, aspect_ratio, 2.0);
 
-    let samples_per_pixel = 150;
+    let samples_per_pixel = 100;
     let depth = 75;
 
     let mut vec = read_stl("resources/stl/untitled.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Perlin { perlin_noise: PerlinNoise::new(), scale: 3.0, color1: Color { e: [1.0, 1.0, 1.0] }, color2: Vec3 {e: [0.0, 0.0, 0.0]} }, emission: Vec3 { e: [0.0, 0.0, 0.0] } }));
@@ -69,16 +72,16 @@ fn main() {
 
     // let world_box = aac(&vec, &surround(&vec.clone()));
     let before_bvh = Instant::now();
-    let world_box = bvh_morton(&mut vec);
+    let world_box = Bvh::new_morton(&mut vec);
     // let world_box = initiate_bvh(&mut vec);
     let time = before_bvh.elapsed().as_secs();
 
-    let mut file = File::create("resources/renders/output.ppm").expect("Could not open the output file.");
+    let mut file =
+        File::create("resources/renders/output.ppm").expect("Could not open the output file.");
     writeln!(file, "P3\n{} {}\n255\n", width, height).expect("Cannot write to file.");
     let n_workers = 11;
     let n_jobs = 11;
     let pool = ThreadPool::new(n_workers);
-
 
     let before_render = Instant::now();
     let (tx, rx) = channel();
@@ -103,7 +106,8 @@ fn main() {
                     vector.push(pixel_color);
                 }
             }
-            tx.send(vector).expect("Could not send the result from the thread.");
+            tx.send(vector)
+                .expect("Could not send the result from the thread.");
         });
     }
     pool.join();
@@ -125,4 +129,3 @@ fn main() {
 
     println!("Finished!");
 }
-

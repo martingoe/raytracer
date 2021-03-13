@@ -5,43 +5,80 @@ use crate::hittables::hittable::{HitRecord, Hittable};
 use crate::ray::Ray;
 use crate::textures::texture::Texture;
 use crate::utils::math_utils::random_double;
-use crate::vec3::{Color, dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract};
+use crate::vec3::{dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract, Color};
 
 pub(crate) trait MaterialTrait: Send + Sync {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, depth: i32, world: Arc<Hittable>) -> Option<Color>;
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        depth: i32,
+        world: Arc<Hittable>,
+    ) -> Option<Color>;
 }
 
 pub enum Material {
-    Dielectric { ir: f64, tint: Texture, emission: Color },
-    Metal { albedo: Texture, fuzz: f64, emission: Color },
-    Diffuse { albedo: Texture, emission: Color },
+    Dielectric {
+        ir: f64,
+        tint: Texture,
+        emission: Color,
+    },
+    Metal {
+        albedo: Texture,
+        fuzz: f64,
+        emission: Color,
+    },
+    Diffuse {
+        albedo: Texture,
+        emission: Color,
+    },
 }
 
 impl MaterialTrait for Material {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, depth: i32, world: Arc<Hittable>) -> Option<Color> {
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        depth: i32,
+        world: Arc<Hittable>,
+    ) -> Option<Color> {
         match self {
             Material::Dielectric { ir, tint, emission } => {
-                let refraction_ratio = if rec.front_face {1.0 / *ir} else  {*ir};
+                let refraction_ratio = if rec.front_face { 1.0 / *ir } else { *ir };
 
                 let unit_direction = r_in.direction.unit_vector();
                 let cos_theta = dot(&-unit_direction, &rec.normal).min(1.0);
                 let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
                 let cannot_refract = refraction_ratio * sin_theta > 1.0;
-                let direction= if cannot_refract || schlicks(cos_theta, refraction_ratio) > random_double(0.0, 1.0) {
+                let direction = if cannot_refract
+                    || schlicks(cos_theta, refraction_ratio) > random_double(0.0, 1.0)
+                {
                     reflect(&unit_direction, &rec.normal)
                 } else {
                     refract(&unit_direction, &rec.normal, refraction_ratio)
                 };
-                return Some(*emission + tint.value_at(rec.u, rec.v, rec.point) * color_at(&Ray::new(rec.point, direction), world.clone(), depth - 1));
+                return Some(
+                    *emission
+                        + tint.value_at(rec.u, rec.v, rec.point)
+                            * color_at(&Ray::new(rec.point, direction), world.clone(), depth - 1),
+                );
             }
 
-            Material::Metal { albedo, fuzz, emission } => {
+            Material::Metal {
+                albedo,
+                fuzz,
+                emission,
+            } => {
                 let reflected = reflect(&r_in.direction.unit_vector(), &rec.normal);
 
                 let scattered = Ray::new(rec.point, reflected + random_in_unit_sphere() * *fuzz);
                 if dot(&scattered.direction, &rec.normal) > 0.0 {
-                    Some(*emission + albedo.value_at(rec.u, rec.v, rec.point) * color_at(&scattered, world.clone(), depth - 1))
+                    Some(
+                        *emission
+                            + albedo.value_at(rec.u, rec.v, rec.point)
+                                * color_at(&scattered, world.clone(), depth - 1),
+                    )
                 } else {
                     None
                 }
@@ -49,7 +86,17 @@ impl MaterialTrait for Material {
 
             Material::Diffuse { albedo, emission } => {
                 let scatter_dir = random_in_hemisphere(&rec.normal);
-                return Some(*emission + (albedo.value_at(rec.u, rec.v, rec.point) * color_at(&Ray::new(rec.point, scatter_dir), world.clone(), depth - 1) * dot(&scatter_dir.unit_vector(), &rec.normal.unit_vector()) * 2.0));
+                return Some(
+                    *emission
+                        + (albedo.value_at(rec.u, rec.v, rec.point)
+                            * color_at(
+                                &Ray::new(rec.point, scatter_dir),
+                                world.clone(),
+                                depth - 1,
+                            )
+                            * dot(&scatter_dir.unit_vector(), &rec.normal.unit_vector())
+                            * 2.0),
+                );
             }
         }
     }

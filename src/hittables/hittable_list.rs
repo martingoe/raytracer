@@ -1,12 +1,12 @@
-use std::sync::Arc;
+use crate::hittables::hittable::{HitRecord, Hittable, HittableTrait};
+use crate::optimizations::bvh::BBox;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
-use crate::hittables::hittable::{Hittable, HitRecord, HittableTrait};
-use crate::hittables::bvh::BBox;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct HittableList {
-    pub(crate) list: Vec<Arc<Hittable>>
+    pub(crate) list: Vec<Arc<Hittable>>,
 }
 
 impl HittableList {
@@ -47,6 +47,8 @@ impl HittableTrait for HittableList {
     }
 
     fn get_bbox(&self) -> BBox {
-        BBox{ bounds: [self.get_min_pos(), self.get_max_pos()] }
+        BBox {
+            bounds: [self.get_min_pos(), self.get_max_pos()],
+        }
     }
 }

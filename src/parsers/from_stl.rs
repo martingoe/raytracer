@@ -1,17 +1,20 @@
 use crate::hittables::hittable::Hittable;
-use std::io::Read;
 use crate::hittables::triangle::Triangle;
-use crate::vec3::{Vec3};
-use std::sync::Arc;
-use std::fs::File;
 use crate::material::Material;
+use crate::vec3::Vec3;
+use std::fs::File;
+use std::io::Read;
+use std::sync::Arc;
 
 pub fn read_stl(file: String, material: Arc<Material>) -> Vec<Arc<Hittable>> {
     let mut file = std::fs::File::open(file).expect("Cannot open the file");
 
     let mut string: [u8; 84] = [0; 84];
-    file.by_ref().take(84).read_exact(&mut string).expect("Reading did not return a value. STL file must be malformed.");
-    let chunks =  read_chunks(&mut file);
+    file.by_ref()
+        .take(84)
+        .read_exact(&mut string)
+        .expect("Reading did not return a value. STL file must be malformed.");
+    let chunks = read_chunks(&mut file);
     let mut vector: Vec<Arc<Hittable>> = Vec::with_capacity(chunks.len());
     let mut i = 0;
     while i < chunks.len() - 4 {
@@ -21,7 +24,9 @@ pub fn read_stl(file: String, material: Arc<Material>) -> Vec<Arc<Hittable>> {
         let b = get_vec3(&x);
         x = chunks[i + 2].as_slice();
         let c = get_vec3(&x);
-        vector.push(Arc::from(Hittable::Triangle{ triangle: Triangle::new(a, b, c, material.clone()) }));
+        vector.push(Arc::from(Hittable::Triangle {
+            triangle: Triangle::new(a, b, c, material.clone()),
+        }));
 
         i += 3;
     }
@@ -29,7 +34,7 @@ pub fn read_stl(file: String, material: Arc<Material>) -> Vec<Arc<Hittable>> {
     return vector;
 }
 
-fn read_chunks(file: &mut File) -> Vec<Vec<u8>>{
+fn read_chunks(file: &mut File) -> Vec<Vec<u8>> {
     let mut finished = false;
     let mut result = Vec::new();
     while !finished {
@@ -37,16 +42,27 @@ fn read_chunks(file: &mut File) -> Vec<Vec<u8>>{
             let chunk_size = if i == 4 { 2 } else { 12 };
             if i == 4 || i == 0 {
                 let mut vec = Vec::new();
-                file.by_ref().take(chunk_size).read_to_end(&mut vec).expect("Could not read from the STL file.");
+                file.by_ref()
+                    .take(chunk_size)
+                    .read_to_end(&mut vec)
+                    .expect("Could not read from the STL file.");
                 continue;
             }
             let mut chunk = Vec::with_capacity(chunk_size as usize);
-            let n = file.by_ref().take(chunk_size as u64).read_to_end(&mut chunk).expect("Could not read from the STL file.");
+            let n = file
+                .by_ref()
+                .take(chunk_size as u64)
+                .read_to_end(&mut chunk)
+                .expect("Could not read from the STL file.");
             chunk.reverse();
-            if n == 0 { finished = true; }
+            if n == 0 {
+                finished = true;
+            }
 
             result.push(chunk);
-            if n < chunk_size as usize { finished = true; }
+            if n < chunk_size as usize {
+                finished = true;
+            }
         }
     }
     return result;
@@ -60,5 +76,7 @@ fn get_vec3(x: &&[u8]) -> Vec3 {
     let b = f32::from_be_bytes(array);
     array.copy_from_slice(&x[8..12]);
     let c = f32::from_be_bytes(array);
-    return Vec3 { e: [a as f64, b as f64, c as f64] };
+    return Vec3 {
+        e: [a as f64, b as f64, c as f64],
+    };
 }
