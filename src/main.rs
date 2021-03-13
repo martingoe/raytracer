@@ -66,7 +66,15 @@ fn main() {
     let samples_per_pixel = 100;
     let depth = 75;
 
-    let mut vec = read_stl("resources/stl/untitled.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Perlin { perlin_noise: PerlinNoise::new(), scale: 3.0, color1: Color { e: [1.0, 1.0, 1.0] }, color2: Vec3 {e: [0.0, 0.0, 0.0]} }, emission: Vec3 { e: [0.0, 0.0, 0.0] } }));
+    let mut vec = read_obj(
+        "resources/obj/cube.obj".parse().unwrap(),
+        Arc::new(Material::Diffuse {
+            albedo: Texture::Solid {
+                color: Color{e: [1.0, 0.0, 0.0]},
+            },
+            emission: Vec3 { e: [0.0, 0.0, 0.0] },
+        }),
+    );
     // vec.append(&mut read_stl("resources/stl/troopers_black.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid {color: Color { e: [0.05, 0.05, 0.05] }}, emission: Vec3 { e: [0.0, 0.0, 0.0] } })));
     // vec.append(&mut read_stl("resources/stl/troopers_lights.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid { color: Color{e: [0.82, 0.23, 0.23] }}, emission: Vec3 { e: [8.2, 2.3, 2.3] } })));
 
