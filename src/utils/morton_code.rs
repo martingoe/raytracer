@@ -47,23 +47,20 @@ fn count_sort(
     codes: &Vec<u64>,
     exp: u64,
 ) -> (Vec<Arc<Hittable>>, Vec<u64>) {
-    let mut count = [0; 10];
+    let mut count = [0; 64];
     let mut dup_values = values.clone();
     let mut dup_codes = codes.clone();
     for i in 0..values.len() {
-        count[(codes[i] as u64 / exp % 10) as usize] += 1;
+        count[(codes[i] as u64 / exp % 64) as usize] += 1;
     }
-    for i in 1..10 {
+    for i in 1..64 {
         count[i] += count[i - 1];
     }
     for i in (0..values.len()).rev() {
-        let i1 = (codes[i] / exp) as usize % 10;
-        if count[i1] == 0 {
-            println!("ie");
-        }
+        let i1 = (codes[i] / exp) as usize % 64;
         dup_values[(count[i1] as usize) - 1] = values[i].clone();
         dup_codes[count[i1] as usize - 1] = codes[i].clone();
-        count[((codes[i] as u64 / exp) % 10) as usize] -= 1;
+        count[((codes[i] as u64 / exp) % 64) as usize] -= 1;
     }
     return (dup_values, dup_codes);
 }
@@ -75,6 +72,6 @@ pub fn radix_sort(values: &mut Vec<Arc<Hittable>>, codes: &mut Vec<u64>) {
         let sort = count_sort(values, codes, exp);
         *values = sort.0.clone();
         *codes = sort.1.clone();
-        exp *= 10;
+        exp *= 64;
     }
 }
