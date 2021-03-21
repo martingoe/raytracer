@@ -12,6 +12,7 @@ use utils::math_utils::random_double;
 use crate::camera::create_camera;
 use crate::color::write_color;
 use crate::hittables::hittable::{Hittable, HittableTrait};
+use crate::hittables::hittable_list::HittableList;
 use crate::material::Material;
 use crate::noises::perlin_noise::PerlinNoise;
 use crate::optimizations::bvh::Bvh;
@@ -20,6 +21,8 @@ use crate::parsers::obj::read_obj;
 use crate::ray::Ray;
 use crate::textures::texture::Texture;
 use crate::vec3::{create_vec_3, Color, Vec3};
+use std::path::Path;
+use crate::hittables::sphere::Sphere;
 
 mod camera;
 mod color;
@@ -47,34 +50,43 @@ fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
             .unwrap_or(Color { e: [0.0, 0.0, 0.0] });
     }
 
-    let unit_direction = r.direction.unit_vector();
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    return Color { e: [1.0, 1.0, 1.0] } * (1.0 - t) + Color { e: [0.5, 0.7, 1.0] } * t;
+    // let unit_direction = r.direction.unit_vector();
+    // let t = 0.5 * (unit_direction.y() + 1.0);
+    // return Color { e: [1.0, 1.0, 1.0] } * (1.0 - t) + Color { e: [0.5, 0.7, 1.0] } * t;
+    return Color{e: [1.0, 1.0, 1.0]}
 }
 
 fn main() {
     let aspect_ratio: f64 = 16.0 / 9.0;
-    let width: i32 = 300;
+    let width: i32 = 1280;
     let height: i32 = (width as f64 / aspect_ratio) as i32;
 
-    let look_from = create_vec_3(1.5, 0.5, -2.0);
-    let look_at = create_vec_3(0.0, 0.0, 0.0);
+    let look_from = create_vec_3(0.0, 5.0, 6.0);
+    let look_at = create_vec_3(0.0, 5.0, 0.0);
     let vup = create_vec_3(0.0, 1.0, 0.0);
 
     let cam = create_camera(look_from, look_at, vup, 100.0, aspect_ratio, 2.0);
 
-    let samples_per_pixel = 100;
-    let depth = 75;
+    let samples_per_pixel = 200;
+    let depth = 100;
 
     let mut vec = read_obj(
-        "resources/obj/cube.obj".parse().unwrap(),
-        Arc::new(Material::Diffuse {
+        Path::new("resources/obj/feathers.obj"),
+        Arc::new(Material::Metal {
             albedo: Texture::Solid {
-                color: Color{e: [1.0, 0.0, 0.0]},
+                color: Color { e: [1.0, 0.0, 0.0] },
             },
+            fuzz: 1.0,
             emission: Vec3 { e: [0.0, 0.0, 0.0] },
         }),
     );
+    // vec.push(Arc::from(Hittable::Sphere {
+    //     sphere: Sphere {
+    //         position: Vec3 { e: [-2.0, 1.0, -2.0] },
+    //         radius: 1.0,
+    //         material: Arc::new(Material::Diffuse { albedo: Texture::Solid { color: Vec3::new() }, emission: Vec3 {e: [5.0, 5.0, 5.0]} })
+    //     }
+    // }));
     // vec.append(&mut read_stl("resources/stl/troopers_black.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid {color: Color { e: [0.05, 0.05, 0.05] }}, emission: Vec3 { e: [0.0, 0.0, 0.0] } })));
     // vec.append(&mut read_stl("resources/stl/troopers_lights.stl".parse().unwrap(), Arc::new(Material::Diffuse { albedo: Texture::Solid { color: Color{e: [0.82, 0.23, 0.23] }}, emission: Vec3 { e: [8.2, 2.3, 2.3] } })));
 

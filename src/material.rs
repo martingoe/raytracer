@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use std::sync::Arc;
 
 use crate::color_at;
@@ -5,7 +6,7 @@ use crate::hittables::hittable::{HitRecord, Hittable};
 use crate::ray::Ray;
 use crate::textures::texture::Texture;
 use crate::utils::math_utils::random_double;
-use crate::vec3::{dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract, Color};
+use crate::vec3::{Color, dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract, Vec3};
 
 pub(crate) trait MaterialTrait: Send + Sync {
     fn scatter(
@@ -32,6 +33,7 @@ pub enum Material {
         albedo: Texture,
         emission: Color,
     },
+
 }
 
 impl MaterialTrait for Material {
@@ -61,7 +63,7 @@ impl MaterialTrait for Material {
                 return Some(
                     *emission
                         + tint.value_at(rec.u, rec.v, rec.point)
-                            * color_at(&Ray::new(rec.point, direction), world.clone(), depth - 1),
+                        * color_at(&Ray::new(rec.point, direction), world.clone(), depth - 1),
                 );
             }
 
@@ -77,7 +79,7 @@ impl MaterialTrait for Material {
                     Some(
                         *emission
                             + albedo.value_at(rec.u, rec.v, rec.point)
-                                * color_at(&scattered, world.clone(), depth - 1),
+                            * color_at(&scattered, world.clone(), depth - 1),
                     )
                 } else {
                     None
@@ -89,13 +91,13 @@ impl MaterialTrait for Material {
                 return Some(
                     *emission
                         + (albedo.value_at(rec.u, rec.v, rec.point)
-                            * color_at(
-                                &Ray::new(rec.point, scatter_dir),
-                                world.clone(),
-                                depth - 1,
-                            )
-                            * dot(&scatter_dir.unit_vector(), &rec.normal.unit_vector())
-                            * 2.0),
+                        * color_at(
+                        &Ray::new(rec.point, scatter_dir),
+                        world.clone(),
+                        depth - 1,
+                    )
+                        * dot(&scatter_dir.unit_vector(), &rec.normal.unit_vector())
+                        * 2.0),
                 );
             }
         }

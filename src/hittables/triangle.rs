@@ -16,6 +16,18 @@ pub struct Triangle {
     pub(crate) texture_coordinates: Option<[(f64, f64); 3]>,
 }
 impl Triangle {
+
+    fn get_uv(&self, u: f64, v: f64) -> (f64, f64){
+        if self.texture_coordinates.is_some() {
+            let coords = self.texture_coordinates.unwrap();
+            let w = 1.0 - u - v;
+            let x = w * coords[0].0 + u * coords[1].0 + v * coords[2].0;
+            let y = w * coords[0].1 + u * coords[1].1 + v * coords[2].1;
+            return (x, 1.0 - y);
+
+        }
+        return (u, v);
+    }
     pub fn new(a: Point3, b: Point3, c: Point3, material: Arc<Material>) -> Triangle {
         let ab = b - a;
         let ac = c - a;
@@ -78,13 +90,14 @@ impl HittableTrait for Triangle {
             return None;
         }
 
+        let (i, j) = self.get_uv(u, v);
         let mut record = HitRecord {
             point: ray.at(t),
             normal: self.n,
             material: self.texture.clone(),
             t,
-            u,
-            v,
+            u: i,
+            v: j,
             front_face: false,
         };
         record.set_face_normal(ray, &self.n);

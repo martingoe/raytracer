@@ -89,10 +89,10 @@ fn parse_vec3(mut words: &mut SplitWhitespace) -> Vec3 {
 }
 
 pub fn add_mtl(map: &mut HashMap<String, Arc<Material>>, file: &File) { // TODO: Implement the correct Phong model
-    let mut current_mat = Arc::new(Material::Diffuse { albedo: Texture::Solid { color: Vec3::new() }, emission: Vec3::new() });
     let mut current_name = String::from("");
 
     let mut diffuse = Vec3::new();
+    let mut diffuse_map = Texture::Mapped { colors: vec![] };
 
     let mut ambient = Vec3::new();
     let mut specular = Vec3::new();
@@ -101,6 +101,7 @@ pub fn add_mtl(map: &mut HashMap<String, Arc<Material>>, file: &File) { // TODO:
     let mut transmission_filter = Vec3::new();
     let mut refraction_index = 0.0;
     let mut emission = Vec3::new();
+    let mut already_added = false;
 
     let reader = BufReader::new(file);
     for (_index, line) in reader.lines().enumerate() {
@@ -109,11 +110,18 @@ pub fn add_mtl(map: &mut HashMap<String, Arc<Material>>, file: &File) { // TODO:
         match words.next() {
             None => {}
             Some("newmtl") => {
-                add_material(map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission);
-                current_name =  words.next().unwrap().parse().unwrap();
+                if !already_added {
+                    add_material(map, &diffuse_map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission);
+                }
+                already_added = false;
+                current_name = words.next().unwrap().parse().unwrap();
             }
             Some("Kd") => {
                 diffuse = parse_vec3(words.borrow_mut());
+            }
+            Some("map_Kd") => {
+                map.insert(current_name.parse().unwrap(), Arc::from(Material::Diffuse{albedo: Texture::parse_mapped(words.next().unwrap().parse().unwrap()), emission }));
+                already_added = true;
             }
             Some("Ks") => {
                 specular = parse_vec3(words.borrow_mut());
@@ -139,10 +147,12 @@ pub fn add_mtl(map: &mut HashMap<String, Arc<Material>>, file: &File) { // TODO:
             _ => {}
         }
     }
-    add_material(map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission);
+    if !already_added {
+        add_material(map, &diffuse_map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission);
+    }
 }
 
-fn add_material(mut map: &mut HashMap<String, Arc<Material>>, mut current_name: &mut String, mut diffuse: Vec3, mut specular: Vec3, mut specular_exp: f64, mut transmission_filter: Vec3, mut refraction_index: f64, mut emission: Vec3) {
+fn add_material(mut map: &mut HashMap<String, Arc<Material>>, diffuse_map: &Texture, mut current_name: &mut String, mut diffuse: Vec3, mut specular: Vec3, mut specular_exp: f64, mut transmission_filter: Vec3, mut refraction_index: f64, mut emission: Vec3) {
     let current_mat = if diffuse != Vec3::new() {
         Arc::new(Material::Diffuse { albedo: Texture::Solid { color: diffuse }, emission })
     } else if transmission_filter != Vec3::new() {
@@ -167,7 +177,7 @@ fn get_face_part(
         1 => vertex = vertices[x[0].parse::<usize>().unwrap() - 1],
         _ => {
             vertex = vertices[x[0].parse::<usize>().unwrap() - 1];
-            texture_coordinate = Some(texture_coordinates[x[0].parse::<usize>().unwrap() - 1]);
+            texture_coordinate = Some(texture_coordinates[x[1].parse::<usize>().unwrap() - 1]);
         }
     }
     return (vertex, texture_coordinate);
