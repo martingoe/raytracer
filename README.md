@@ -53,6 +53,9 @@ Run the program
 ### Eiffel Tower
 ![EiffelTower](resources/renders/eiffeltower.png)
 
+### Feathers - The first image rendered with mapped materials
+![Feathers](resources/renders/feathers.png)
+
 ## Resources
 
 These are very useful resources that I have used to get started with this project
