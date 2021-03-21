@@ -24,6 +24,14 @@ impl Vec3 {
         let s = 1e-8;
         return self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s;
     }
+
+    pub fn spherical_coordinate(theta: f64, phi: f64) -> Vec3 {
+        let x = theta.sin() * phi.cos();
+        let y = theta.cos();
+        let z = theta.sin() * phi.sin();
+        return Vec3{e: [x, y, z]}.unit_vector()
+    }
+
     pub fn x(self) -> f64 {
         return self.e[0];
     }
@@ -56,6 +64,15 @@ pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
 impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {}, {})", self.x(), self.y(), self.z())
+    }
+}
+impl std::cmp::PartialEq for Vec3{
+    fn eq(&self, other: &Self) -> bool {
+        return self.e == other.e;
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        return self.e != other.e;
     }
 }
 
