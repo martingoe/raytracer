@@ -55,6 +55,7 @@ Run the program
 
 ### Feathers - The first image rendered with mapped materials
 ![Feathers](resources/renders/feathers.png)
+Model and material taken from a model by [skartemka](https://sketchfab.com/3d-models/rainier-ak-3d-57aef8cdf42046a39f1ad9b428756213)
 
 ## Resources
 
