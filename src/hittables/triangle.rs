@@ -1,10 +1,11 @@
+use std::f64::EPSILON;
+use std::sync::Arc;
+
 use crate::hittables::hittable::{HitRecord, HittableTrait};
 use crate::material::Material;
 use crate::optimizations::bvh::BBox;
 use crate::ray::Ray;
 use crate::vec3::{cross, dot, Point3, Vec3};
-use std::f64::EPSILON;
-use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -15,16 +16,15 @@ pub struct Triangle {
     pub(crate) texture: Arc<Material>,
     pub(crate) texture_coordinates: Option<[(f64, f64); 3]>,
 }
-impl Triangle {
 
-    fn get_uv(&self, u: f64, v: f64) -> (f64, f64){
+impl Triangle {
+    fn get_uv(&self, u: f64, v: f64) -> (f64, f64) {
         if self.texture_coordinates.is_some() {
             let coords = self.texture_coordinates.unwrap();
             let w = 1.0 - u - v;
             let x = w * coords[0].0 + u * coords[1].0 + v * coords[2].0;
             let y = w * coords[0].1 + u * coords[1].1 + v * coords[2].1;
             return (x, 1.0 - y);
-
         }
         return (u, v);
     }
@@ -41,6 +41,7 @@ impl Triangle {
             texture_coordinates: None,
         };
     }
+
     pub fn new_texture_coordinates(
         a: Point3,
         b: Point3,
@@ -61,6 +62,7 @@ impl Triangle {
         };
     }
 }
+
 impl HittableTrait for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let ab = self.b - self.a;

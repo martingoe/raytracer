@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufRead, BufReader};
 use std::str::{FromStr, SplitWhitespace};
 
 use crate::noises::perlin_noise::PerlinNoise;
@@ -33,23 +33,7 @@ impl Texture {
         let file = File::open(path).unwrap();
         let mut result = Vec::new();
         let mut reader = BufReader::new(file);
-        let mut line = String::new();
-        reader.read_line(&mut line).unwrap();
-
-        let mut temp = Vec::new();
-        let num = reader.read_until(b' ', &mut temp).unwrap();
-        let x = std::str::from_utf8(&*temp).unwrap().replace(" ", "");
-        let width = i32::from_str(&*x).unwrap();
-        temp = Vec::new();
-        reader.read_until('\n' as u8, &mut temp).unwrap();
-        let x = std::str::from_utf8(&*temp).unwrap().replace("\n", "");
-        let height = i32::from_str(&*x).unwrap();
-
-        temp = Vec::new();
-        reader.read_until('\n' as u8, &mut temp).unwrap();
-        let x = std::str::from_utf8(&*temp).unwrap().replace("\n", "");
-        let max_value = f64::from_str(&*x).unwrap();
-        reader.read_line(&mut line);
+        let (width, max_value) = Texture::read_base_information(&mut reader);
 
         let mut i = 0;
         let mut j = 0;
@@ -69,6 +53,25 @@ impl Texture {
         }
 
         return Texture::Mapped { colors: result };
+    }
+
+    fn read_base_information(reader: &mut BufReader<File>) -> (i32, f64) {
+        let mut line = String::new();
+        reader.read_line(&mut line).unwrap();
+
+        let mut temp = Vec::new();
+        reader.read_until(b' ', &mut temp).unwrap();
+        let x = std::str::from_utf8(&*temp).unwrap().replace(" ", "");
+        let width = i32::from_str(&*x).unwrap();
+        temp = Vec::new();
+        reader.read_until('\n' as u8, &mut temp).unwrap();
+
+        temp = Vec::new();
+        reader.read_until('\n' as u8, &mut temp).unwrap();
+        let x = std::str::from_utf8(&*temp).unwrap().replace("\n", "");
+        let max_value = f64::from_str(&*x).unwrap();
+        reader.read_line(&mut line);
+        (width, max_value)
     }
 
 

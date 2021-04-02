@@ -1,4 +1,4 @@
-use std::borrow::{Borrow, BorrowMut};
+use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -13,7 +13,7 @@ use crate::textures::texture::Texture;
 use crate::vec3::Vec3;
 
 pub fn read_obj(path: &Path, material: Arc<Material>) -> Vec<Arc<Hittable>> {
-    let mut file = std::fs::File::open(path).expect("Cannot open the file");
+    let file = std::fs::File::open(path).expect("Cannot open the file");
     let reader = BufReader::new(file);
 
     let mut vertices = Vec::new();
@@ -43,7 +43,7 @@ pub fn read_obj(path: &Path, material: Arc<Material>) -> Vec<Arc<Hittable>> {
                 vertices.push(vertex);
             }
             Some("vt") => {
-                let mut vertex = (
+                let vertex = (
                     parse_next_f64(words.borrow_mut()),
                     parse_next_f64(words.borrow_mut()),
                 );
@@ -80,7 +80,7 @@ pub fn read_obj(path: &Path, material: Arc<Material>) -> Vec<Arc<Hittable>> {
     return faces;
 }
 
-fn parse_vec3(mut words: &mut SplitWhitespace) -> Vec3 {
+fn parse_vec3(words: &mut SplitWhitespace) -> Vec3 {
     let mut vertex = Vec3::new();
     for i in 0..3 {
         vertex.e[i] = parse_next_f64(words.borrow_mut());
@@ -152,7 +152,7 @@ pub fn add_mtl(map: &mut HashMap<String, Arc<Material>>, file: &File) { // TODO:
     }
 }
 
-fn add_material(mut map: &mut HashMap<String, Arc<Material>>, diffuse_map: &Texture, mut current_name: &mut String, mut diffuse: Vec3, mut specular: Vec3, mut specular_exp: f64, mut transmission_filter: Vec3, mut refraction_index: f64, mut emission: Vec3) {
+fn add_material(map: &mut HashMap<String, Arc<Material>>, diffuse_map: &Texture, current_name: &mut String, diffuse: Vec3, specular: Vec3, specular_exp: f64, transmission_filter: Vec3, refraction_index: f64, emission: Vec3) {
     let current_mat = if diffuse != Vec3::new() {
         Arc::new(Material::Diffuse { albedo: Texture::Solid { color: diffuse }, emission })
     } else if transmission_filter != Vec3::new() {
@@ -177,7 +177,9 @@ fn get_face_part(
         1 => vertex = vertices[x[0].parse::<usize>().unwrap() - 1],
         _ => {
             vertex = vertices[x[0].parse::<usize>().unwrap() - 1];
-            texture_coordinate = Some(texture_coordinates[x[1].parse::<usize>().unwrap() - 1]);
+            if x[1] != "" {
+                texture_coordinate = Some(texture_coordinates[x[1].parse::<usize>().unwrap() - 1]);
+            }
         }
     }
     return (vertex, texture_coordinate);

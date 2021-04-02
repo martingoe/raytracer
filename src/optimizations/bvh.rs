@@ -1,4 +1,4 @@
-use std::f64::{INFINITY, MAX, MIN};
+use std::f64::{MAX, MIN};
 use std::sync::Arc;
 
 use crate::hittables::hittable::{HitRecord, Hittable, HittableTrait};
@@ -17,7 +17,7 @@ pub struct Bvh {
 impl HittableTrait for Bvh {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if let (Hittable::Bvh { bvh }, Hittable::Bvh { bvh: bvh2 }) =
-            (&self.left.as_ref(), &self.right.as_ref())
+        (&self.left.as_ref(), &self.right.as_ref())
         {
             return self.both_bvh(bvh, bvh2, ray, t_min, t_max);
         }
@@ -272,58 +272,6 @@ impl BBox {
         return self.bounds[0];
     }
 
-    pub fn half_area(&self) -> f64 {
-        let extents = [
-            self.max().e[0] - self.min().e[0],
-            self.max().e[1] - self.min().e[1],
-            self.max().e[2] - self.min().e[2],
-        ];
-        return extents[0] * (extents[1] + extents[2]) + extents[1] * extents[2];
-    }
-    pub fn union(&self, other: &BBox) -> BBox {
-        return BBox {
-            bounds: [
-                Vec3 {
-                    e: [
-                        if self.min().e[0] < other.min().e[0] {
-                            self.min().e[0]
-                        } else {
-                            other.min().e[0]
-                        },
-                        if self.min().e[1] < other.min().e[1] {
-                            self.min().e[1]
-                        } else {
-                            other.min().e[1]
-                        },
-                        if self.min().e[2] < other.min().e[2] {
-                            self.min().e[2]
-                        } else {
-                            other.min().e[2]
-                        },
-                    ],
-                },
-                Vec3 {
-                    e: [
-                        if self.max().e[0] < other.max().e[0] {
-                            self.max().e[0]
-                        } else {
-                            other.max().e[0]
-                        },
-                        if self.max().e[1] < other.max().e[1] {
-                            self.max().e[1]
-                        } else {
-                            other.max().e[1]
-                        },
-                        if self.max().e[2] < other.max().e[2] {
-                            self.max().e[2]
-                        } else {
-                            other.max().e[2]
-                        },
-                    ],
-                },
-            ],
-        };
-    }
     pub fn ray_intersects(&self, ray: &Ray, t0: f64, t1: f64) -> Option<f64> {
         let mut t_min = (self.bounds[ray.sign[0]].x() - ray.origin.x()) * ray.inv_direction.x();
         let mut t_max = (self.bounds[1 - ray.sign[0]].x() - ray.origin.x()) * ray.inv_direction.x();

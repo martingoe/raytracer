@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::hittables::hittable::{Hittable, HittableTrait};
-use crate::optimizations::bvh::{surround, BBox, Bvh};
+use crate::hittables::hittable::Hittable;
+use crate::optimizations::bvh::BBox;
 use crate::vec3::Vec3;
 
 pub fn get_pos_on_unit_cube(pos: &Vec3, b_box: &BBox) -> Vec3 {

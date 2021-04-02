@@ -1,4 +1,3 @@
-use std::f64::consts::PI;
 use std::sync::Arc;
 
 use crate::color_at;
@@ -6,7 +5,7 @@ use crate::hittables::hittable::{HitRecord, Hittable};
 use crate::ray::Ray;
 use crate::textures::texture::Texture;
 use crate::utils::math_utils::random_double;
-use crate::vec3::{Color, dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract, Vec3};
+use crate::vec3::{Color, dot, random_in_hemisphere, random_in_unit_sphere, reflect, refract};
 
 pub(crate) trait MaterialTrait: Send + Sync {
     fn scatter(
