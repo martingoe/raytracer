@@ -111,7 +111,7 @@ pub fn add_mtl(map: &mut HashMap<String, Arc<Material>>, file: &File) { // TODO:
             None => {}
             Some("newmtl") => {
                 if !already_added {
-                    add_material(map, &diffuse_map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission);
+                    add_material(map, &diffuse_map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission, ambient);
                 }
                 already_added = false;
                 current_name = words.next().unwrap().parse().unwrap();
@@ -148,18 +148,23 @@ pub fn add_mtl(map: &mut HashMap<String, Arc<Material>>, file: &File) { // TODO:
         }
     }
     if !already_added {
-        add_material(map, &diffuse_map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission);
+        add_material(map, &diffuse_map, &mut current_name, diffuse, specular, specular_exp, transmission_filter, refraction_index, emission, ambient);
     }
 }
 
-fn add_material(map: &mut HashMap<String, Arc<Material>>, diffuse_map: &Texture, current_name: &mut String, diffuse: Vec3, specular: Vec3, specular_exp: f64, transmission_filter: Vec3, refraction_index: f64, emission: Vec3) {
-    let current_mat = if diffuse != Vec3::new() {
-        Arc::new(Material::Diffuse { albedo: Texture::Solid { color: diffuse }, emission })
-    } else if transmission_filter != Vec3::new() {
+fn add_material(map: &mut HashMap<String, Arc<Material>>, diffuse_map: &Texture, current_name: &mut String, diffuse: Vec3, specular: Vec3, specular_exp: f64, transmission_filter: Vec3, refraction_index: f64, emission: Vec3, ambient: Vec3) {
+    let current_mat =  if transmission_filter != Vec3::new() {
         Arc::new(Material::Dielectric { ir: refraction_index, tint: Texture::Solid { color: transmission_filter }, emission })
     } else {
-        Arc::new(Material::Metal { albedo: Texture::Solid { color: specular }, fuzz: specular_exp / 1000.0, emission })
+        Arc::new(Material::CookTorrance {
+            diffuse: Texture::Solid {color: diffuse},
+            specular: Texture::Solid {color: specular},
+            roughness: specular_exp / 1000.0,
+            k_d: 0.2,
+            emission
+        })
     };
+
     if current_name != "" {
         map.insert(current_name.parse().unwrap(), current_mat.clone());
     }

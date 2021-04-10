@@ -22,7 +22,6 @@ use crate::textures::texture::Texture;
 use crate::vec3::{Color, create_vec_3, Vec3};
 use crate::parsers::obj::read_obj;
 use crate::hittables::sphere::Sphere;
-use scoped_threadpool::{Pool, Scope};
 use std::borrow::{Borrow, BorrowMut};
 use crate::opengl::opengl::draw_window;
 
