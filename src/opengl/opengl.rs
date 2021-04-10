@@ -55,6 +55,6 @@ pub fn draw_window(rx: Arc<Mutex<Vec<Vec<Vec3>>>>, width: i32, height: i32, samp
         }
         canvas.present();
 
-        thread::sleep(time::Duration::from_secs_f32(1.0));
+        thread::sleep(time::Duration::from_secs_f32(2.0));
     }
 }
