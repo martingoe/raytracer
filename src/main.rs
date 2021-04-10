@@ -15,12 +15,16 @@ use crate::camera::{Camera, create_camera};
 use crate::color::write_color;
 use crate::hittables::hittable::{Hittable, HittableTrait};
 use crate::material::Material;
-use crate::opengl::opengl::draw_window;
 use crate::optimizations::bvh::Bvh;
 use crate::parsers::from_stl::read_stl;
 use crate::ray::Ray;
 use crate::textures::texture::Texture;
 use crate::vec3::{Color, create_vec_3, Vec3};
+use crate::parsers::obj::read_obj;
+use crate::hittables::sphere::Sphere;
+use scoped_threadpool::{Pool, Scope};
+use std::borrow::{Borrow, BorrowMut};
+use crate::opengl::opengl::draw_window;
 
 mod opengl;
 
@@ -39,10 +43,10 @@ mod vec3;
 
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
-const WIDTH: i32 = 400;
+const WIDTH: i32 = 500;
 const HEIGHT: i32 = (WIDTH as f64 / ASPECT_RATIO) as i32;
-const SAMPLES_PER_PIXEL: usize = 100;
-const DEPTH: i32 = 10;
+const SAMPLES_PER_PIXEL: usize = 200;
+const DEPTH: i32 = 100;
 
 fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
     if depth == 0 {
@@ -61,30 +65,44 @@ fn color_at(r: &Ray, world: Arc<Hittable>, depth: i32) -> Color {
     let unit_direction = r.direction.unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
     return Color { e: [1.0, 1.0, 1.0] } * (1.0 - t) + Color { e: [0.5, 0.7, 1.0] } * t;
+    // Vec3::new()
 }
 
 fn main() {
-    let look_from = create_vec_3(0.0, 0.0, 2.0);
+    let look_from = create_vec_3(0.0, 0.0, 3.0);
     let look_at = create_vec_3(0.0, 0.0, 0.0);
     let vup = create_vec_3(0.0, 1.0, 0.0);
 
     let cam = create_camera(look_from, look_at, vup, 100.0, ASPECT_RATIO, 2.0);
 
-    let mut vec = read_stl(
-        "resources/stl/stl.stl".parse().unwrap(),
-        Arc::new(Material::Metal {
-            albedo: Texture::Solid {
-                color: Color { e: [1.0, 0.0, 0.0] },
-            },
-            fuzz: 1.0,
-            emission: Vec3 { e: [0.0, 0.0, 0.0] },
-        }),
-    );
+    let mut vec = vec![Arc::from(Hittable::Sphere {
+        sphere: Sphere {
+            position: Vec3 { e: [20.0, 60.0, 15.0] },
+            radius: 10.0,
+            material: Arc::new(Material::Diffuse { albedo: Texture::Solid { color: Vec3::new() }, emission: Vec3 { e: [100.0, 100.0, 100.0] } })
+        }
+    })];
+    for i in 0..5{
+        vec.push(Arc::new(Hittable::Sphere { sphere: Sphere {
+            position: Vec3 { e: [i as f64 * 1.2 - 2.5, 0.0, 0.0] },
+            radius: 0.5,
+            material: Arc::new(Material::CookTorrance {
+                diffuse: Texture::Solid {color: Vec3{ e: [1.0, 0.0, 0.0] }},
+                specular: Texture::Solid {color: Vec3{ e: [1.0, 1.0, 1.0] }},
+                roughness: 0.3,
+                k_d: i as f64 / 5.0,
+                emission: Vec3::new()
+            })
+        } }));
+    }
+
+
 
     let world_box = Bvh::new_morton(&mut vec);
 
     render_scene_to_file(cam, world_box);
 }
+
 
 fn render_scene_to_file(cam: Camera, world_box: Arc<Hittable>) {
     let n_workers = 11;
